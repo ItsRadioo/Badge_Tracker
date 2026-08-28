@@ -37,3 +37,15 @@ This version adds physical badge inventory control. Open **Badge inventory** fro
 - print an order-only report.
 
 **Available = On Hand - Owed**. **Order Qty = Owed + Reserve - On Hand**, with a minimum of zero. OAS inventory is shared across sections. Existing V2 browser data is migrated automatically because the inventory fields are added without changing the storage key. JSON backups now include inventory data.
+
+## Inventory organization
+
+Badge inventory is grouped into collapsible sections:
+
+- Beaver PABs;
+- Cub PABs;
+- Scout PABs;
+- Outdoor Adventure Skills, separated by stream; and
+- progression and section awards.
+
+The OAS streams used by this tracker are: Camping, Trail, Winter, Paddling, Aquatic, Vertical, Scoutcraft, Emergency, and Sailing. Existing OAS storage IDs are retained where applicable so browser-saved checkmarks and inventory remain compatible.

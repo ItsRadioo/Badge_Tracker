@@ -3,9 +3,15 @@ const LEGACY_KEY = "beaverBadgeTrackerV1";
 const MAX_ROSTER = 25;
 
 const oasStreams = [
-  "Aquatic Skills", "Camping Skills", "Emergency Aid Skills", "Hiking Skills",
-  "Paddling Skills", "Sailing Skills", "Scoutcraft Skills", "Trail Skills",
-  "Vertical Skills", "Winter Skills"
+  { name: "Camping", slug: "camping-skills" },
+  { name: "Trail", slug: "trail-skills" },
+  { name: "Winter", slug: "winter-skills" },
+  { name: "Paddling", slug: "paddling-skills" },
+  { name: "Aquatic", slug: "aquatic-skills" },
+  { name: "Vertical", slug: "vertical-skills" },
+  { name: "Scoutcraft", slug: "scoutcraft-skills" },
+  { name: "Emergency", slug: "emergency-aid-skills" },
+  { name: "Sailing", slug: "sailing-skills" }
 ];
 
 const sectionConfigs = {
@@ -72,7 +78,13 @@ function buildBadgeCatalog() {
     config.badges.forEach(([abbr, name]) => items.push({ id: `${sectionKey}:pab:${abbr}`, name, category: `${config.label} PAB`, section: sectionKey, abbr }));
   }
   oasStreams.forEach(stream => {
-    for (let stage = 1; stage <= 9; stage++) items.push({ id: `oas:${slugify(stream)}:${stage}`, name: `${stream} Stage ${stage}`, category: "Shared OAS", section: "shared" });
+    for (let stage = 1; stage <= 9; stage++) items.push({
+      id: `oas:${stream.slug}:${stage}`,
+      name: `${stream.name} Stage ${stage}`,
+      category: `OAS — ${stream.name}`,
+      section: "shared",
+      stream: stream.name
+    });
   });
   return items;
 }
@@ -415,14 +427,14 @@ function attendancePage() {
 function oasPage(stream) {
   const config = activeConfig();
   const data = activeData();
-  const slug = stream.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  const slug = stream.slug;
   const stageHeaders = Array.from({ length: 9 }, (_, index) => `<th>Stage ${index + 1}</th>`).join("");
   const rows = data.roster.map((person, index) => `<tr>
     <td>${index + 1}</td><td class="name-col">${personNameCell(person)}</td>
-    ${Array.from({ length: 9 }, (_, stage) => `<td>${checkBox(`oas:${slug}:${person.id}:${stage + 1}`, `${person.name} ${stream} Stage ${stage + 1}`)}</td>`).join("")}
+    ${Array.from({ length: 9 }, (_, stage) => `<td>${checkBox(`oas:${slug}:${person.id}:${stage + 1}`, `${person.name} ${stream.name} Stage ${stage + 1}`)}</td>`).join("")}
     <td class="notes-col"></td>
   </tr>`).join("");
-  return `<section class="print-page">${pageTitle(stream, "Outdoor Adventure Skills — Stages 1 through 9")}
+  return `<section class="print-page">${pageTitle(stream.name, "Outdoor Adventure Skills — Stages 1 through 9")}
     <table class="tracker-table oas-table"><thead><tr><th class="num-col">#</th><th class="name-col">${esc(config.youthLabel)}</th>${stageHeaders}<th class="notes-col">Notes</th></tr></thead><tbody>${rows}</tbody></table>
     <div class="notes-area"><div class="notes-box"><strong>Program notes:</strong></div><div class="notes-box"><strong>Evidence / Scouter initials:</strong></div></div>
     <div class="footer-note">Check each stage as completed. OAS progress continues across sections.</div>
@@ -467,10 +479,10 @@ function completionRecords() {
         if (data.checks[checkKey]) records.push(makeCompletion(sectionKey, checkKey, `${sectionKey}:pab:${abbr}`, youth, name));
       }
       for (const stream of oasStreams) {
-        const slug = slugify(stream);
+        const slug = stream.slug;
         for (let stage = 1; stage <= 9; stage++) {
           const checkKey = `oas:${slug}:${person.id}:${stage}`;
-          if (data.checks[checkKey]) records.push(makeCompletion(sectionKey, checkKey, `oas:${slug}:${stage}`, youth, `${stream} Stage ${stage}`));
+          if (data.checks[checkKey]) records.push(makeCompletion(sectionKey, checkKey, `oas:${slug}:${stage}`, youth, `${stream.name} Stage ${stage}`));
         }
       }
     }
@@ -608,8 +620,8 @@ function renderInventory() {
       return `<div class="owed-row"><div><strong>${esc(record.youth)}</strong><span>${esc(record.sectionLabel)} · ${esc(record.badgeName)}</span></div><div class="owed-stock">${stock} on hand</div><button class="button button-small ${stock > 0 ? "button-primary" : "button-disabled"}" data-issue="${esc(record.completionId)}" ${stock <= 0 ? "disabled" : ""}>Issue</button></div>`;
     }).join("") : `<p class="empty-state">No earned badges are currently waiting to be issued.</p>`;
 
-  const tbody = document.getElementById("inventoryTableBody");
-  tbody.innerHTML = rows.map(row => `<tr class="${row.orderQty > 0 ? "needs-order" : ""}">
+  const groupsEl = document.getElementById("inventoryGroups");
+  const tableForRows = list => `<div class="inventory-table-wrap"><table class="inventory-table"><thead><tr><th>Badge</th><th>Category</th><th>On hand</th><th>Owed</th><th>Available</th><th>Reserve</th><th>Order</th><th>Adjust</th></tr></thead><tbody>${list.map(row => `<tr class="${row.orderQty > 0 ? "needs-order" : ""}">
     <td><strong>${esc(row.name)}</strong>${row.abbr ? `<small>${esc(row.abbr)}</small>` : ""}</td>
     <td>${esc(row.category)}</td>
     <td class="number-cell">${row.onHand}</td>
@@ -618,12 +630,28 @@ function renderInventory() {
     <td><input class="reserve-input" type="number" min="0" step="1" value="${row.reorderLevel}" data-reserve="${esc(row.id)}" aria-label="Reserve level for ${esc(row.name)}"></td>
     <td class="number-cell order-cell">${row.orderQty || "—"}</td>
     <td class="inventory-row-actions"><button type="button" class="mini-button" data-receive="${esc(row.id)}">+ Stock</button><button type="button" class="mini-button" data-adjust="${esc(row.id)}">Set count</button></td>
-  </tr>`).join("");
+  </tr>`).join("")}</tbody></table></div>`;
+
+  const pabGroups = [["beavers", "Beaver PABs"], ["cubs", "Cub PABs"], ["scouts", "Scout PABs"]]
+    .map(([section, label]) => [label, rows.filter(row => row.section === section && row.id.includes(":pab:"))]);
+  const sectionBadges = rows.filter(row => row.section !== "shared" && !row.id.includes(":pab:"));
+  const oasGroups = oasStreams.map(stream => [stream.name, rows.filter(row => row.section === "shared" && row.stream === stream.name)]);
+
+  groupsEl.innerHTML = `
+    <div class="inventory-group-block"><h3>Personal Achievement Badges</h3><p>Each section's unique PAB stock is kept separate.</p>
+      ${pabGroups.map(([label, list]) => `<details class="inventory-dropdown"><summary><span>${esc(label)}</span><strong>${list.reduce((sum, row) => sum + row.onHand, 0)} on hand</strong></summary>${tableForRows(list)}</details>`).join("")}
+    </div>
+    <div class="inventory-group-block"><h3>Outdoor Adventure Skills</h3><p>OAS stock is shared across sections and sorted by skill stream.</p>
+      ${oasGroups.map(([label, list]) => `<details class="inventory-dropdown"><summary><span>${esc(label)}</span><strong>${list.reduce((sum, row) => sum + row.onHand, 0)} on hand</strong></summary>${tableForRows(list)}</details>`).join("")}
+    </div>
+    <div class="inventory-group-block"><h3>Progression & Section Awards</h3><p>Section progression badges, top awards, and Link Badges.</p>
+      <details class="inventory-dropdown"><summary><span>Section badges</span><strong>${sectionBadges.reduce((sum, row) => sum + row.onHand, 0)} on hand</strong></summary>${tableForRows(sectionBadges)}</details>
+    </div>`;
 
   owedList.querySelectorAll("[data-issue]").forEach(btn => btn.addEventListener("click", () => issueBadge(btn.dataset.issue)));
-  tbody.querySelectorAll("[data-receive]").forEach(btn => btn.addEventListener("click", () => receiveStock(btn.dataset.receive)));
-  tbody.querySelectorAll("[data-adjust]").forEach(btn => btn.addEventListener("click", () => adjustStock(btn.dataset.adjust)));
-  tbody.querySelectorAll("[data-reserve]").forEach(input => input.addEventListener("change", () => setReserve(input.dataset.reserve, input.value)));
+  groupsEl.querySelectorAll("[data-receive]").forEach(btn => btn.addEventListener("click", () => receiveStock(btn.dataset.receive)));
+  groupsEl.querySelectorAll("[data-adjust]").forEach(btn => btn.addEventListener("click", () => adjustStock(btn.dataset.adjust)));
+  groupsEl.querySelectorAll("[data-reserve]").forEach(input => input.addEventListener("change", () => setReserve(input.dataset.reserve, input.value)));
 
   const history = document.getElementById("inventoryHistory");
   const recent = state.inventory.transactions.slice(-20).reverse();
@@ -649,8 +677,8 @@ function printableInventoryReport(orderOnly = false) {
   const shown = orderOnly ? rows.filter(row => row.orderQty > 0) : rows;
   const groups = [];
   for (const stream of oasStreams) {
-    const list = shown.filter(r => r.section === "shared" && r.name.startsWith(`${stream} Stage `));
-    if (list.length) groups.push([`OAS — ${stream}`, list]);
+    const list = shown.filter(r => r.section === "shared" && r.stream === stream.name);
+    if (list.length) groups.push([`OAS — ${stream.name}`, list]);
   }
   for (const [sectionKey, label] of [["beavers", "Beavers"], ["cubs", "Cubs"], ["scouts", "Scouts"]]) {
     const list = shown.filter(r => r.section === sectionKey);
