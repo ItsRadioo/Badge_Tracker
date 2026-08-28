@@ -26,6 +26,7 @@
 
       <div class="header-actions" aria-label="Tracker actions">
         <button id="printBtn" class="button button-primary" type="button">Print selected section</button>
+        <button id="printAttendanceBtn" class="button button-secondary" type="button">Print attendance sheet</button>
         <button id="inventoryBtn" class="button button-secondary" type="button">Badge inventory</button>
         <button id="exportBtn" class="button button-secondary" type="button">Export backup</button>
         <label class="button button-secondary file-button">Import backup<input id="importFile" type="file" accept="application/json"></label>
@@ -114,8 +115,8 @@
         <div class="inventory-heading">
           <div>
             <p class="section-kicker">Physical stock control</p>
-            <h2>Badge inventory</h2>
-            <p>Earned badges are automatically counted as owed until you mark them issued.</p>
+            <h2 id="inventoryTitle">Badge inventory</h2>
+            <p id="inventorySectionNote">Earned badges are automatically counted as owed until you mark them issued.</p>
           </div>
           <div class="inventory-actions">
             <button id="printInventoryBtn" class="button button-primary" type="button">Print full inventory</button>
@@ -129,18 +130,8 @@
           <div id="owedList" class="owed-list"></div>
         </section>
         <section class="inventory-panel">
-          <div class="inventory-subheading"><div><h3>Stock levels</h3><p>Set physical stock and the target quantity you want to keep available after earned badges are covered.</p></div></div>
-          <div class="bulk-stock-target" aria-label="Set target stock for all badges">
-            <div>
-              <label for="allBadgeTarget"><strong>Target stock for every badge</strong></label>
-              <p>Enter the quantity you normally want available for each badge, then apply it to every badge at once.</p>
-            </div>
-            <div class="bulk-stock-controls">
-              <input id="allBadgeTarget" type="number" min="0" step="1" value="5" inputmode="numeric" aria-label="Target stock quantity for every badge">
-              <button id="applyAllBadgeTargetBtn" class="button button-secondary" type="button">Set all targets</button>
-            </div>
-          </div>
-          <div id="inventoryGroups" class="inventory-groups"></div>
+          <div class="inventory-subheading"><div><h3>Stock levels</h3><p>Set physical stock and the reserve level you want to keep after earned badges are covered.</p></div></div>
+          <div class="inventory-table-wrap"><table class="inventory-table"><thead><tr><th>Badge</th><th>Category</th><th>On hand</th><th>Owed</th><th>Available</th><th>Reserve</th><th>Order</th><th>Adjust</th></tr></thead><tbody id="inventoryTableBody"></tbody></table></div>
         </section>
         <section class="inventory-panel">
           <div class="inventory-subheading"><div><h3>Recent activity</h3><p>Stock receipts, issues, and manual adjustments are recorded here.</p></div></div>
@@ -157,6 +148,7 @@
       <span class="drag-handle" aria-hidden="true">⋮⋮</span>
       <span class="roster-number"></span>
       <input class="roster-name" type="text" placeholder="Youth name">
+      <label class="prepaid-field"><span>Prepaid dues $</span><input class="roster-prepaid" type="number" min="0" step="0.01" value="0.00" aria-label="Prepaid dues"></label>
       <button class="move-up icon-button" type="button" aria-label="Move up">↑</button>
       <button class="move-down icon-button" type="button" aria-label="Move down">↓</button>
       <button class="remove-person icon-button danger" type="button" aria-label="Remove youth">×</button>

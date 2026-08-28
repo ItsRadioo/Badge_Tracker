@@ -3,15 +3,9 @@ const LEGACY_KEY = "beaverBadgeTrackerV1";
 const MAX_ROSTER = 25;
 
 const oasStreams = [
-  { name: "Camping", slug: "camping-skills" },
-  { name: "Trail", slug: "trail-skills" },
-  { name: "Winter", slug: "winter-skills" },
-  { name: "Paddling", slug: "paddling-skills" },
-  { name: "Aquatic", slug: "aquatic-skills" },
-  { name: "Vertical", slug: "vertical-skills" },
-  { name: "Scoutcraft", slug: "scoutcraft-skills" },
-  { name: "Emergency", slug: "emergency-aid-skills" },
-  { name: "Sailing", slug: "sailing-skills" }
+  "Aquatic Skills", "Camping Skills", "Emergency Aid Skills", "Hiking Skills",
+  "Paddling Skills", "Sailing Skills", "Scoutcraft Skills", "Trail Skills",
+  "Vertical Skills", "Winter Skills"
 ];
 
 const sectionConfigs = {
@@ -77,15 +71,18 @@ function buildBadgeCatalog() {
     items.push({ id: `${sectionKey}:award:${config.linkAward[0]}`, name: config.linkAward[1], category: `${config.label} award`, section: sectionKey });
     config.badges.forEach(([abbr, name]) => items.push({ id: `${sectionKey}:pab:${abbr}`, name, category: `${config.label} PAB`, section: sectionKey, abbr }));
   }
-  oasStreams.forEach(stream => {
-    for (let stage = 1; stage <= 9; stage++) items.push({
-      id: `oas:${stream.slug}:${stage}`,
-      name: `${stream.name} Stage ${stage}`,
-      category: `OAS — ${stream.name}`,
-      section: "shared",
-      stream: stream.name
+  for (const [sectionKey, config] of Object.entries(sectionConfigs)) {
+    oasStreams.forEach(stream => {
+      for (let stage = 1; stage <= 9; stage++) {
+        items.push({
+          id: `${sectionKey}:oas:${slugify(stream)}:${stage}`,
+          name: `${stream} Stage ${stage}`,
+          category: `${config.label} OAS`,
+          section: sectionKey
+        });
+      }
     });
-  });
+  }
   return items;
 }
 
@@ -107,12 +104,18 @@ function normalizeInventory(raw) {
     }
   }
   inventory.issued = raw?.issued && typeof raw.issued === "object" ? { ...raw.issued } : {};
+  for (const [completionId, issue] of Object.entries(inventory.issued)) {
+    if (issue?.badgeId?.startsWith("oas:")) {
+      const sectionKey = completionId.split("|")[0];
+      if (sectionConfigs[sectionKey]) issue.badgeId = `${sectionKey}:${issue.badgeId}`;
+    }
+  }
   inventory.transactions = Array.isArray(raw?.transactions) ? raw.transactions.slice(-500) : [];
   return inventory;
 }
 
 function newRoster(count = 12) {
-  return Array.from({ length: count }, () => ({ id: crypto.randomUUID(), name: "" }));
+  return Array.from({ length: count }, () => ({ id: crypto.randomUUID(), name: "", prepaidDues: 0 }));
 }
 
 function newSectionState(config) {
@@ -132,7 +135,6 @@ const defaultState = {
 
 let state = loadState();
 let saveTimer;
-const openInventoryGroups = new Set();
 
 const els = {
   groupName: document.getElementById("groupName"),
@@ -162,7 +164,7 @@ function normalizeSection(raw, config) {
   return {
     details: { sectionName: config.defaultUnit, scouterName: "", ...(raw?.details || {}) },
     roster: Array.isArray(raw?.roster) && raw.roster.length
-      ? raw.roster.slice(0, MAX_ROSTER).map(person => ({ id: person.id || crypto.randomUUID(), name: person.name || "" }))
+      ? raw.roster.slice(0, MAX_ROSTER).map(person => ({ id: person.id || crypto.randomUUID(), name: person.name || "", prepaidDues: Math.max(0, Number(person.prepaidDues) || 0) }))
       : newRoster(),
     checks: raw?.checks || {}
   };
@@ -190,7 +192,7 @@ function loadState() {
           sectionName: legacy.details?.colonyName || "",
           scouterName: legacy.details?.scouterName || ""
         },
-        roster: legacy.roster.slice(0, MAX_ROSTER).map(person => ({ id: person.id || crypto.randomUUID(), name: person.name || "" })),
+        roster: legacy.roster.slice(0, MAX_ROSTER).map(person => ({ id: person.id || crypto.randomUUID(), name: person.name || "", prepaidDues: Math.max(0, Number(person.prepaidDues) || 0) })),
         checks: legacy.checks || {}
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(migrated));
@@ -277,6 +279,14 @@ function renderRosterEditor() {
       queueSave();
       renderPrintBook();
     });
+    const prepaid = row.querySelector(".roster-prepaid");
+    prepaid.value = Number(person.prepaidDues || 0).toFixed(2);
+    prepaid.addEventListener("change", event => {
+      person.prepaidDues = Math.max(0, Number(event.target.value) || 0);
+      event.target.value = person.prepaidDues.toFixed(2);
+      queueSave();
+      renderPrintBook();
+    });
     row.querySelector(".move-up").disabled = index === 0;
     row.querySelector(".move-down").disabled = index === data.roster.length - 1;
     row.querySelector(".move-up").addEventListener("click", () => movePerson(index, -1));
@@ -299,7 +309,7 @@ function movePerson(index, direction) {
 function removePerson(index) {
   const roster = activeData().roster;
   roster.splice(index, 1);
-  if (!roster.length) roster.push({ id: crypto.randomUUID(), name: "" });
+  if (!roster.length) roster.push({ id: crypto.randomUUID(), name: "", prepaidDues: 0 });
   queueSave();
   renderAll();
 }
@@ -310,7 +320,7 @@ function addPerson() {
     alert(`The printable layout supports up to ${MAX_ROSTER} youth per section.`);
     return;
   }
-  roster.push({ id: crypto.randomUUID(), name: "" });
+  roster.push({ id: crypto.randomUUID(), name: "", prepaidDues: 0 });
   queueSave();
   renderAll();
   els.rosterEditor.querySelectorAll(".roster-name")[roster.length - 1]?.focus();
@@ -400,6 +410,7 @@ function attendancePage() {
   const rows = data.roster.map((person, index) => `<tr>
     <td>${index + 1}</td>
     <td class="name-col">${personNameCell(person)}</td>
+    <td class="attendance-prepaid">${Number(person.prepaidDues || 0) > 0 ? `$${Number(person.prepaidDues).toFixed(2)}` : "—"}</td>
     ${Array.from({ length: 4 }, (_, meeting) => `
       <td class="attendance-date" aria-label="Meeting ${meeting + 1} date"></td>
       <td class="attendance-dues" aria-label="Meeting ${meeting + 1} dues"></td>`).join("")}
@@ -412,6 +423,7 @@ function attendancePage() {
         <tr class="attendance-group-row">
           <th rowspan="2" class="num-col">#</th>
           <th rowspan="2" class="name-col">${esc(config.youthLabel)}</th>
+          <th rowspan="2" class="attendance-prepaid">Prepaid</th>
           <th colspan="8">Month</th>
         </tr>
         <tr>
@@ -421,21 +433,21 @@ function attendancePage() {
       <tbody>${rows}</tbody>
     </table>
     <div class="attendance-notes"><strong>Notes:</strong></div>
-    <div class="footer-note">Enter the meeting dates at the top of each Date column, then mark attendance and dues by hand.</div>
+    <div class="footer-note">Prepaid dues are carried from the youth record and remain unchanged month to month. Enter meeting dates, then mark attendance and any weekly dues by hand.</div>
   </section>`;
 }
 
 function oasPage(stream) {
   const config = activeConfig();
   const data = activeData();
-  const slug = stream.slug;
+  const slug = stream.toLowerCase().replace(/[^a-z0-9]+/g, "-");
   const stageHeaders = Array.from({ length: 9 }, (_, index) => `<th>Stage ${index + 1}</th>`).join("");
   const rows = data.roster.map((person, index) => `<tr>
     <td>${index + 1}</td><td class="name-col">${personNameCell(person)}</td>
-    ${Array.from({ length: 9 }, (_, stage) => `<td>${checkBox(`oas:${slug}:${person.id}:${stage + 1}`, `${person.name} ${stream.name} Stage ${stage + 1}`)}</td>`).join("")}
+    ${Array.from({ length: 9 }, (_, stage) => `<td>${checkBox(`oas:${slug}:${person.id}:${stage + 1}`, `${person.name} ${stream} Stage ${stage + 1}`)}</td>`).join("")}
     <td class="notes-col"></td>
   </tr>`).join("");
-  return `<section class="print-page">${pageTitle(stream.name, "Outdoor Adventure Skills — Stages 1 through 9")}
+  return `<section class="print-page">${pageTitle(stream, "Outdoor Adventure Skills — Stages 1 through 9")}
     <table class="tracker-table oas-table"><thead><tr><th class="num-col">#</th><th class="name-col">${esc(config.youthLabel)}</th>${stageHeaders}<th class="notes-col">Notes</th></tr></thead><tbody>${rows}</tbody></table>
     <div class="notes-area"><div class="notes-box"><strong>Program notes:</strong></div><div class="notes-box"><strong>Evidence / Scouter initials:</strong></div></div>
     <div class="footer-note">Check each stage as completed. OAS progress continues across sections.</div>
@@ -480,10 +492,10 @@ function completionRecords() {
         if (data.checks[checkKey]) records.push(makeCompletion(sectionKey, checkKey, `${sectionKey}:pab:${abbr}`, youth, name));
       }
       for (const stream of oasStreams) {
-        const slug = stream.slug;
+        const slug = slugify(stream);
         for (let stage = 1; stage <= 9; stage++) {
           const checkKey = `oas:${slug}:${person.id}:${stage}`;
-          if (data.checks[checkKey]) records.push(makeCompletion(sectionKey, checkKey, `oas:${slug}:${stage}`, youth, `${stream.name} Stage ${stage}`));
+          if (data.checks[checkKey]) records.push(makeCompletion(sectionKey, checkKey, `${sectionKey}:oas:${slug}:${stage}`, youth, `${stream} Stage ${stage}`));
         }
       }
     }
@@ -510,18 +522,20 @@ function inventoryItem(id) {
   return state.inventory.items[id];
 }
 
-function inventoryMetrics() {
-  const completions = completionRecords();
+function inventoryMetrics(sectionKey = state.activeSection) {
+  const completions = completionRecords().filter(record => record.sectionKey === sectionKey);
   const owed = completions.filter(record => !record.issued);
   const owedByBadge = {};
   owed.forEach(record => { owedByBadge[record.badgeId] = (owedByBadge[record.badgeId] || 0) + 1; });
-  const rows = badgeCatalog.map(badge => {
-    const item = inventoryItem(badge.id);
-    const owedCount = owedByBadge[badge.id] || 0;
-    const available = item.onHand - owedCount;
-    const orderQty = Math.max(0, owedCount + item.reorderLevel - item.onHand);
-    return { ...badge, onHand: item.onHand, reorderLevel: item.reorderLevel, owed: owedCount, available, orderQty };
-  });
+  const rows = badgeCatalog
+    .filter(badge => badge.section === sectionKey)
+    .map(badge => {
+      const item = inventoryItem(badge.id);
+      const owedCount = owedByBadge[badge.id] || 0;
+      const available = item.onHand - owedCount;
+      const orderQty = Math.max(0, owedCount + item.reorderLevel - item.onHand);
+      return { ...badge, onHand: item.onHand, reorderLevel: item.reorderLevel, owed: owedCount, available, orderQty };
+    });
   return { completions, owed, rows };
 }
 
@@ -601,25 +615,15 @@ function showRecords() {
   document.getElementById("trackerSetup").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
-
-function setAllBadgeTargets() {
-  const input = document.getElementById("allBadgeTarget");
-  const raw = input?.value ?? "";
-  const target = Math.floor(Number(raw));
-  if (!Number.isFinite(target) || target < 0) return alert("Enter a whole number of zero or more.");
-  badgeCatalog.forEach(badge => { inventoryItem(badge.id).reorderLevel = target; });
-  addTransaction("bulk-target", "all", 0, `Target stock set to ${target} for all badges`);
-  queueSave();
-  renderInventory();
-}
-
-function inventoryDropdown(label, list, tableForRows, key) {
-  const isOpen = openInventoryGroups.has(key) ? " open" : "";
-  return `<details class="inventory-dropdown" data-group-key="${esc(key)}"${isOpen}><summary><span>${esc(label)}</span><strong>${list.reduce((sum, row) => sum + row.onHand, 0)} on hand</strong></summary>${tableForRows(list)}</details>`;
-}
-
 function renderInventory() {
-  const { owed, rows } = inventoryMetrics();
+  const sectionKey = state.activeSection;
+  const sectionLabel = sectionConfigs[sectionKey].label;
+  const title = document.getElementById("inventoryTitle");
+  const note = document.getElementById("inventorySectionNote");
+  if (title) title.textContent = `${sectionLabel} badge inventory`;
+  if (note) note.textContent = `Only ${sectionLabel} stock is shown here. Earned badges are counted as owed until they are physically issued.`;
+
+  const { owed, rows } = inventoryMetrics(sectionKey);
   const totalOnHand = rows.reduce((sum, row) => sum + row.onHand, 0);
   const totalOrder = rows.reduce((sum, row) => sum + row.orderQty, 0);
   const lowStock = rows.filter(row => row.orderQty > 0).length;
@@ -638,8 +642,8 @@ function renderInventory() {
       return `<div class="owed-row"><div><strong>${esc(record.youth)}</strong><span>${esc(record.sectionLabel)} · ${esc(record.badgeName)}</span></div><div class="owed-stock">${stock} on hand</div><button class="button button-small ${stock > 0 ? "button-primary" : "button-disabled"}" data-issue="${esc(record.completionId)}" ${stock <= 0 ? "disabled" : ""}>Issue</button></div>`;
     }).join("") : `<p class="empty-state">No earned badges are currently waiting to be issued.</p>`;
 
-  const groupsEl = document.getElementById("inventoryGroups");
-  const tableForRows = list => `<div class="inventory-table-wrap"><table class="inventory-table"><thead><tr><th>Badge</th><th>Category</th><th>On hand</th><th>Owed</th><th>Available</th><th>Reserve</th><th>Order</th><th>Adjust</th></tr></thead><tbody>${list.map(row => `<tr class="${row.orderQty > 0 ? "needs-order" : ""}">
+  const tbody = document.getElementById("inventoryTableBody");
+  tbody.innerHTML = rows.map(row => `<tr class="${row.orderQty > 0 ? "needs-order" : ""}">
     <td><strong>${esc(row.name)}</strong>${row.abbr ? `<small>${esc(row.abbr)}</small>` : ""}</td>
     <td>${esc(row.category)}</td>
     <td class="number-cell">${row.onHand}</td>
@@ -648,37 +652,19 @@ function renderInventory() {
     <td><input class="reserve-input" type="number" min="0" step="1" value="${row.reorderLevel}" data-reserve="${esc(row.id)}" aria-label="Reserve level for ${esc(row.name)}"></td>
     <td class="number-cell order-cell">${row.orderQty || "—"}</td>
     <td class="inventory-row-actions"><button type="button" class="mini-button" data-receive="${esc(row.id)}">+ Stock</button><button type="button" class="mini-button" data-adjust="${esc(row.id)}">Set count</button></td>
-  </tr>`).join("")}</tbody></table></div>`;
-
-  const pabGroups = [["beavers", "Beaver PABs"], ["cubs", "Cub PABs"], ["scouts", "Scout PABs"]]
-    .map(([section, label]) => [label, rows.filter(row => row.section === section && row.id.includes(":pab:"))]);
-  const sectionBadges = rows.filter(row => row.section !== "shared" && !row.id.includes(":pab:"));
-  const oasGroups = oasStreams.map(stream => [stream.name, rows.filter(row => row.section === "shared" && row.stream === stream.name)]);
-
-  groupsEl.innerHTML = `
-    <div class="inventory-group-block"><h3>Personal Achievement Badges</h3><p>Each section's unique PAB stock is kept separate.</p>
-      ${pabGroups.map(([label, list]) => inventoryDropdown(label, list, tableForRows, `pab:${label}`)).join("")}
-    </div>
-    <div class="inventory-group-block"><h3>Outdoor Adventure Skills</h3><p>OAS stock is shared across sections and sorted by skill stream.</p>
-      ${oasGroups.map(([label, list]) => inventoryDropdown(label, list, tableForRows, `oas:${label}`)).join("")}
-    </div>
-    <div class="inventory-group-block"><h3>Progression & Section Awards</h3><p>Section progression badges, top awards, and Link Badges.</p>
-      ${inventoryDropdown("Section badges", sectionBadges, tableForRows, "section:badges")}
-    </div>`;
+  </tr>`).join("");
 
   owedList.querySelectorAll("[data-issue]").forEach(btn => btn.addEventListener("click", () => issueBadge(btn.dataset.issue)));
-  groupsEl.querySelectorAll("[data-receive]").forEach(btn => btn.addEventListener("click", () => receiveStock(btn.dataset.receive)));
-  groupsEl.querySelectorAll("[data-adjust]").forEach(btn => btn.addEventListener("click", () => adjustStock(btn.dataset.adjust)));
-  groupsEl.querySelectorAll("[data-reserve]").forEach(input => input.addEventListener("change", () => setReserve(input.dataset.reserve, input.value)));
-  groupsEl.querySelectorAll(".inventory-dropdown").forEach(details => details.addEventListener("toggle", () => {
-    const key = details.dataset.groupKey;
-    if (!key) return;
-    if (details.open) openInventoryGroups.add(key);
-    else openInventoryGroups.delete(key);
-  }));
+  tbody.querySelectorAll("[data-receive]").forEach(btn => btn.addEventListener("click", () => receiveStock(btn.dataset.receive)));
+  tbody.querySelectorAll("[data-adjust]").forEach(btn => btn.addEventListener("click", () => adjustStock(btn.dataset.adjust)));
+  tbody.querySelectorAll("[data-reserve]").forEach(input => input.addEventListener("change", () => setReserve(input.dataset.reserve, input.value)));
 
   const history = document.getElementById("inventoryHistory");
-  const recent = state.inventory.transactions.slice(-20).reverse();
+  const currentBadgeIds = new Set(badgeCatalog.filter(b => b.section === sectionKey).map(b => b.id));
+  const recent = state.inventory.transactions
+    .filter(tx => currentBadgeIds.has(tx.badgeId))
+    .slice(-20)
+    .reverse();
   history.innerHTML = recent.length ? recent.map(tx => {
     const badge = badgeById[tx.badgeId];
     const when = new Date(tx.timestamp).toLocaleString("en-CA", { dateStyle: "medium", timeStyle: "short" });
@@ -697,28 +683,35 @@ function reportHeader(title, subtitle) {
 }
 
 function printableInventoryReport(orderOnly = false) {
-  const { owed, rows } = inventoryMetrics();
+  const sectionKey = state.activeSection;
+  const sectionLabel = sectionConfigs[sectionKey].label;
+  const { owed, rows } = inventoryMetrics(sectionKey);
   const shown = orderOnly ? rows.filter(row => row.orderQty > 0) : rows;
   const groups = [];
+
+  const progressionAndPab = shown.filter(r => !r.id.includes(":oas:"));
+  if (progressionAndPab.length) groups.push([`${sectionLabel} badges & progression`, progressionAndPab]);
+
   for (const stream of oasStreams) {
-    const list = shown.filter(r => r.section === "shared" && r.stream === stream.name);
-    if (list.length) groups.push([`OAS — ${stream.name}`, list]);
+    const list = shown.filter(r => r.id.includes(`:oas:${slugify(stream)}:`));
+    if (list.length) groups.push([`OAS — ${stream}`, list]);
   }
-  for (const [sectionKey, label] of [["beavers", "Beavers"], ["cubs", "Cubs"], ["scouts", "Scouts"]]) {
-    const list = shown.filter(r => r.section === sectionKey);
-    if (list.length) groups.push([label, list]);
-  }
+
   const totalOnHand = rows.reduce((s,r) => s+r.onHand,0);
   const totalOrder = rows.reduce((s,r) => s+r.orderQty,0);
-  const title = orderOnly ? "Badge Order Report" : "Badge Inventory Report";
-  const subtitle = orderOnly ? "Badges requiring purchase to cover earned badges and reserve stock" : "Physical badge stock, outstanding awards, and reorder requirements";
+  const title = orderOnly ? `${sectionLabel} Badge Order Report` : `${sectionLabel} Badge Inventory Report`;
+  const subtitle = orderOnly
+    ? `Badges for ${sectionLabel} requiring purchase to cover earned badges and reserve stock`
+    : `Physical ${sectionLabel} badge stock, outstanding awards, and reorder requirements`;
+
   const tables = groups.map(([group, list]) => `<section class="report-section"><h2>${esc(group)}</h2><table><thead><tr><th>Badge</th><th>Category</th><th>On Hand</th><th>Owed</th><th>Available</th><th>Reserve</th><th>Order Qty</th></tr></thead><tbody>${list.map(row => `<tr class="${row.orderQty > 0 ? "report-order" : ""}"><td>${esc(row.name)}</td><td>${esc(row.category)}</td><td>${row.onHand}</td><td>${row.owed}</td><td>${row.available}</td><td>${row.reorderLevel}</td><td><strong>${row.orderQty || "—"}</strong></td></tr>`).join("")}</tbody></table></section>`).join("");
+
   const orderSummary = rows.filter(r => r.orderQty > 0);
   return `<section class="inventory-report-page">${reportHeader(title, subtitle)}
     <div class="report-summary"><div><strong>${totalOnHand}</strong><span>On hand</span></div><div><strong>${owed.length}</strong><span>Owed</span></div><div><strong>${orderSummary.length}</strong><span>Lines to order</span></div><div><strong>${totalOrder}</strong><span>Badges to order</span></div></div>
-    ${tables || `<p class="report-empty">No badges currently need to be ordered.</p>`}
+    ${tables || `<p class="report-empty">No ${esc(sectionLabel)} badges currently need to be ordered.</p>`}
     ${!orderOnly && orderSummary.length ? `<section class="report-section order-summary"><h2>Shopping / Order Summary</h2><table><thead><tr><th>Badge</th><th>Order Qty</th></tr></thead><tbody>${orderSummary.map(row => `<tr><td>${esc(row.name)}</td><td><strong>${row.orderQty}</strong></td></tr>`).join("")}</tbody></table></section>` : ""}
-    <footer>Order quantity = Owed + Reserve − On Hand, minimum zero.</footer>
+    <footer>Order quantity = Owed + Reserve − On Hand, minimum zero. Inventory is tracked separately for each section.</footer>
   </section>`;
 }
 
@@ -779,7 +772,21 @@ document.querySelectorAll(".section-tab").forEach(tab => tab.addEventListener("c
   setSection(tab.dataset.section);
 }));
 els.addPersonBtn.addEventListener("click", addPerson);
-document.getElementById("printBtn").addEventListener("click", () => { document.body.classList.remove("printing-report"); window.print(); });
+document.getElementById("printBtn").addEventListener("click", () => {
+  document.body.classList.remove("printing-report", "printing-attendance");
+  window.print();
+});
+
+document.getElementById("printAttendanceBtn").addEventListener("click", () => {
+  document.body.classList.remove("printing-report");
+  document.body.classList.add("printing-attendance");
+  const cleanup = () => {
+    document.body.classList.remove("printing-attendance");
+    window.removeEventListener("afterprint", cleanup);
+  };
+  window.addEventListener("afterprint", cleanup);
+  window.print();
+});
 document.getElementById("inventoryBtn").addEventListener("click", () => {
   const inventoryOpen = !document.getElementById("inventoryView").hidden;
   if (inventoryOpen) showRecords();
@@ -788,7 +795,6 @@ document.getElementById("inventoryBtn").addEventListener("click", () => {
 document.getElementById("recordsBtn").addEventListener("click", showRecords);
 document.getElementById("printInventoryBtn").addEventListener("click", () => printInventoryReport(false));
 document.getElementById("printOrderBtn").addEventListener("click", () => printInventoryReport(true));
-document.getElementById("applyAllBadgeTargetBtn").addEventListener("click", setAllBadgeTargets);
 document.getElementById("exportBtn").addEventListener("click", exportBackup);
 document.getElementById("resetBtn").addEventListener("click", resetSelectedSection);
 document.getElementById("importFile").addEventListener("change", event => {
