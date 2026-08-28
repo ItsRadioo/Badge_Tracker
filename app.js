@@ -132,6 +132,7 @@ const defaultState = {
 
 let state = loadState();
 let saveTimer;
+const openInventoryGroups = new Set();
 
 const els = {
   groupName: document.getElementById("groupName"),
@@ -600,6 +601,23 @@ function showRecords() {
   document.getElementById("trackerSetup").scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
+
+function setAllBadgeTargets() {
+  const input = document.getElementById("allBadgeTarget");
+  const raw = input?.value ?? "";
+  const target = Math.floor(Number(raw));
+  if (!Number.isFinite(target) || target < 0) return alert("Enter a whole number of zero or more.");
+  badgeCatalog.forEach(badge => { inventoryItem(badge.id).reorderLevel = target; });
+  addTransaction("bulk-target", "all", 0, `Target stock set to ${target} for all badges`);
+  queueSave();
+  renderInventory();
+}
+
+function inventoryDropdown(label, list, tableForRows, key) {
+  const isOpen = openInventoryGroups.has(key) ? " open" : "";
+  return `<details class="inventory-dropdown" data-group-key="${esc(key)}"${isOpen}><summary><span>${esc(label)}</span><strong>${list.reduce((sum, row) => sum + row.onHand, 0)} on hand</strong></summary>${tableForRows(list)}</details>`;
+}
+
 function renderInventory() {
   const { owed, rows } = inventoryMetrics();
   const totalOnHand = rows.reduce((sum, row) => sum + row.onHand, 0);
@@ -639,19 +657,25 @@ function renderInventory() {
 
   groupsEl.innerHTML = `
     <div class="inventory-group-block"><h3>Personal Achievement Badges</h3><p>Each section's unique PAB stock is kept separate.</p>
-      ${pabGroups.map(([label, list]) => `<details class="inventory-dropdown"><summary><span>${esc(label)}</span><strong>${list.reduce((sum, row) => sum + row.onHand, 0)} on hand</strong></summary>${tableForRows(list)}</details>`).join("")}
+      ${pabGroups.map(([label, list]) => inventoryDropdown(label, list, tableForRows, `pab:${label}`)).join("")}
     </div>
     <div class="inventory-group-block"><h3>Outdoor Adventure Skills</h3><p>OAS stock is shared across sections and sorted by skill stream.</p>
-      ${oasGroups.map(([label, list]) => `<details class="inventory-dropdown"><summary><span>${esc(label)}</span><strong>${list.reduce((sum, row) => sum + row.onHand, 0)} on hand</strong></summary>${tableForRows(list)}</details>`).join("")}
+      ${oasGroups.map(([label, list]) => inventoryDropdown(label, list, tableForRows, `oas:${label}`)).join("")}
     </div>
     <div class="inventory-group-block"><h3>Progression & Section Awards</h3><p>Section progression badges, top awards, and Link Badges.</p>
-      <details class="inventory-dropdown"><summary><span>Section badges</span><strong>${sectionBadges.reduce((sum, row) => sum + row.onHand, 0)} on hand</strong></summary>${tableForRows(sectionBadges)}</details>
+      ${inventoryDropdown("Section badges", sectionBadges, tableForRows, "section:badges")}
     </div>`;
 
   owedList.querySelectorAll("[data-issue]").forEach(btn => btn.addEventListener("click", () => issueBadge(btn.dataset.issue)));
   groupsEl.querySelectorAll("[data-receive]").forEach(btn => btn.addEventListener("click", () => receiveStock(btn.dataset.receive)));
   groupsEl.querySelectorAll("[data-adjust]").forEach(btn => btn.addEventListener("click", () => adjustStock(btn.dataset.adjust)));
   groupsEl.querySelectorAll("[data-reserve]").forEach(input => input.addEventListener("change", () => setReserve(input.dataset.reserve, input.value)));
+  groupsEl.querySelectorAll(".inventory-dropdown").forEach(details => details.addEventListener("toggle", () => {
+    const key = details.dataset.groupKey;
+    if (!key) return;
+    if (details.open) openInventoryGroups.add(key);
+    else openInventoryGroups.delete(key);
+  }));
 
   const history = document.getElementById("inventoryHistory");
   const recent = state.inventory.transactions.slice(-20).reverse();
@@ -764,6 +788,7 @@ document.getElementById("inventoryBtn").addEventListener("click", () => {
 document.getElementById("recordsBtn").addEventListener("click", showRecords);
 document.getElementById("printInventoryBtn").addEventListener("click", () => printInventoryReport(false));
 document.getElementById("printOrderBtn").addEventListener("click", () => printInventoryReport(true));
+document.getElementById("applyAllBadgeTargetBtn").addEventListener("click", setAllBadgeTargets);
 document.getElementById("exportBtn").addEventListener("click", exportBackup);
 document.getElementById("resetBtn").addEventListener("click", resetSelectedSection);
 document.getElementById("importFile").addEventListener("change", event => {

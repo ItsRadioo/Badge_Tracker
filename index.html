@@ -129,7 +129,17 @@
           <div id="owedList" class="owed-list"></div>
         </section>
         <section class="inventory-panel">
-          <div class="inventory-subheading"><div><h3>Stock levels</h3><p>Set physical stock and the reserve level you want to keep after earned badges are covered.</p></div></div>
+          <div class="inventory-subheading"><div><h3>Stock levels</h3><p>Set physical stock and the target quantity you want to keep available after earned badges are covered.</p></div></div>
+          <div class="bulk-stock-target" aria-label="Set target stock for all badges">
+            <div>
+              <label for="allBadgeTarget"><strong>Target stock for every badge</strong></label>
+              <p>Enter the quantity you normally want available for each badge, then apply it to every badge at once.</p>
+            </div>
+            <div class="bulk-stock-controls">
+              <input id="allBadgeTarget" type="number" min="0" step="1" value="5" inputmode="numeric" aria-label="Target stock quantity for every badge">
+              <button id="applyAllBadgeTargetBtn" class="button button-secondary" type="button">Set all targets</button>
+            </div>
+          </div>
           <div id="inventoryGroups" class="inventory-groups"></div>
         </section>
         <section class="inventory-panel">

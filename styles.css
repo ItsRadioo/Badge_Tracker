@@ -549,3 +549,23 @@ body[data-section="scouts"] { --section-accent: #b4232f; --section-soft: #fdecee
 .inventory-dropdown summary strong { color:var(--muted); font-size:.84rem; white-space:nowrap; }
 .inventory-dropdown .inventory-table-wrap { border-top:1px solid #e1e1e1; }
 .inventory-dropdown .inventory-table { margin:0; }
+
+.bulk-stock-target {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  margin:0 0 18px;
+  padding:15px 16px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:#fafafa;
+}
+.bulk-stock-target p { margin:4px 0 0; color:var(--muted); font-size:.9rem; }
+.bulk-stock-controls { display:flex; align-items:center; gap:8px; flex:0 0 auto; }
+.bulk-stock-controls input { width:92px; min-height:42px; padding:8px 10px; border:1px solid var(--border); border-radius:10px; background:var(--white); }
+@media (max-width:720px) {
+  .bulk-stock-target { align-items:flex-start; flex-direction:column; }
+  .bulk-stock-controls { width:100%; }
+  .bulk-stock-controls input { flex:1; }
+}

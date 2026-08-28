@@ -34,7 +34,9 @@ This version adds physical badge inventory control. Open **Badge inventory** fro
 - receive stock or set a corrected physical count;
 - review recent inventory activity and undo an issue;
 - print a full inventory report; and
-- print an order-only report.
+- print an order-only report;
+- inventory dropdowns stay open while you adjust stock or target levels;
+- use **Target stock for every badge** to set the desired reserve quantity across the entire badge catalog in one action;
 
 **Available = On Hand - Owed**. **Order Qty = Owed + Reserve - On Hand**, with a minimum of zero. OAS inventory is shared across sections. Existing V2 browser data is migrated automatically because the inventory fields are added without changing the storage key. JSON backups now include inventory data.
 
