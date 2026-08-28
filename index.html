@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en-CA">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Offline badge and Outdoor Adventure Skills tracker for the 1st Sault Ste. Marie Scout Group.">
+  <meta name="theme-color" content="#b4232f">
+  <title>Badge Tracker | 1st Sault Ste. Marie Scout Group</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link no-print" href="#trackerSetup">Skip to tracker</a>
+
+  <header class="site-header no-print">
+    <div class="container nav-wrap">
+      <div class="brand" aria-label="1st Sault Ste. Marie Scout Group">
+        <div class="brand-mark" aria-hidden="true">1</div>
+        <div>
+          <strong>1st Sault Ste. Marie</strong>
+          <small>Scout Group badge tracker</small>
+        </div>
+      </div>
+
+      <div class="header-actions" aria-label="Tracker actions">
+        <button id="printBtn" class="button button-primary" type="button">Print selected section</button>
+        <button id="inventoryBtn" class="button button-secondary" type="button">Badge inventory</button>
+        <button id="exportBtn" class="button button-secondary" type="button">Export backup</button>
+        <label class="button button-secondary file-button">Import backup<input id="importFile" type="file" accept="application/json"></label>
+        <button id="resetBtn" class="button button-danger" type="button">Reset section</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="tracker-hero no-print">
+      <div class="container hero-grid">
+        <div>
+          <p class="eyebrow">Section record keeping</p>
+          <h1>Track every badge.<br>Print it cleanly.</h1>
+          <p class="hero-lead">Enter each youth once, track Personal Achievement Badges and every OAS stage, and print a complete record book for Beavers, Cubs, or Scouts.</p>
+        </div>
+        <div class="hero-card" aria-label="Tracker features">
+          <span class="hero-card-kicker">Offline and private</span>
+          <strong>Names remain on this device.</strong>
+          <p>The tracker automatically saves in your browser. Export a backup whenever you need to move or protect the records.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-nav-wrap no-print" aria-label="Choose a Scout section">
+      <div class="container">
+        <nav class="section-tabs">
+          <button class="section-tab" data-section="beavers" type="button">
+            <span class="tab-dot" aria-hidden="true"></span>
+            <span><strong>Beavers</strong><small>Colony records</small></span>
+          </button>
+          <button class="section-tab" data-section="cubs" type="button">
+            <span class="tab-dot" aria-hidden="true"></span>
+            <span><strong>Cubs</strong><small>Pack records</small></span>
+          </button>
+          <button class="section-tab" data-section="scouts" type="button">
+            <span class="tab-dot" aria-hidden="true"></span>
+            <span><strong>Scouts</strong><small>Troop records</small></span>
+          </button>
+        </nav>
+      </div>
+    </section>
+
+    <div class="app-shell container">
+      <section id="trackerSetup" class="setup-panel no-print">
+        <div class="panel-heading">
+          <div>
+            <p class="section-kicker">Selected section</p>
+            <h2 id="sectionHeading">Section record book</h2>
+            <p>Names and checkmarks save automatically on this device.</p>
+          </div>
+          <span id="saveStatus" class="save-status" aria-live="polite">Saved</span>
+        </div>
+
+        <div class="details-grid">
+          <label><span>Group name</span><input id="groupName" type="text" value="1st Sault Ste. Marie"></label>
+          <label><span>Scouting year</span><input id="scoutingYear" type="text" placeholder="2026–2027"></label>
+          <label id="sectionNameLabel"><span>Section name</span><input id="sectionName" type="text"></label>
+          <label><span>Scouter</span><input id="scouterName" type="text" placeholder="Scouter name"></label>
+        </div>
+
+        <div class="roster-header">
+          <div>
+            <p class="section-kicker">Youth roster</p>
+            <h2 id="rosterHeading">Roster</h2>
+            <p>Enter names once. The roster appears on every badge and OAS page.</p>
+          </div>
+          <button id="addPersonBtn" class="button button-primary" type="button">Add youth</button>
+        </div>
+        <div id="rosterEditor" class="roster-editor"></div>
+      </section>
+
+      <section id="recordsView">
+        <section class="preview-heading no-print">
+          <div>
+            <p class="section-kicker">Live preview</p>
+            <h2>Printable record book</h2>
+          </div>
+          <p>Only the selected section prints. Each OAS stream has its own dedicated page.</p>
+        </section>
+
+        <section id="printBook" class="print-book" aria-label="Printable badge record book"></section>
+      </section>
+
+      <section id="inventoryView" class="inventory-view no-print" hidden>
+        <div class="inventory-heading">
+          <div>
+            <p class="section-kicker">Physical stock control</p>
+            <h2>Badge inventory</h2>
+            <p>Earned badges are automatically counted as owed until you mark them issued.</p>
+          </div>
+          <div class="inventory-actions">
+            <button id="printInventoryBtn" class="button button-primary" type="button">Print full inventory</button>
+            <button id="printOrderBtn" class="button button-secondary" type="button">Print order report</button>
+            <button id="recordsBtn" class="button button-secondary" type="button">Back to records</button>
+          </div>
+        </div>
+        <div id="inventorySummary" class="inventory-summary"></div>
+        <section class="inventory-panel">
+          <div class="inventory-subheading"><div><h3>Badges owed</h3><p>Issue a badge when it has physically been handed to the youth.</p></div></div>
+          <div id="owedList" class="owed-list"></div>
+        </section>
+        <section class="inventory-panel">
+          <div class="inventory-subheading"><div><h3>Stock levels</h3><p>Set physical stock and the reserve level you want to keep after earned badges are covered.</p></div></div>
+          <div class="inventory-table-wrap"><table class="inventory-table"><thead><tr><th>Badge</th><th>Category</th><th>On hand</th><th>Owed</th><th>Available</th><th>Reserve</th><th>Order</th><th>Adjust</th></tr></thead><tbody id="inventoryTableBody"></tbody></table></div>
+        </section>
+        <section class="inventory-panel">
+          <div class="inventory-subheading"><div><h3>Recent activity</h3><p>Stock receipts, issues, and manual adjustments are recorded here.</p></div></div>
+          <div id="inventoryHistory" class="inventory-history"></div>
+        </section>
+      </section>
+
+      <section id="reportBook" class="report-book" aria-label="Printable badge inventory report"></section>
+    </div>
+  </main>
+
+  <template id="rosterRowTemplate">
+    <div class="roster-row">
+      <span class="drag-handle" aria-hidden="true">⋮⋮</span>
+      <span class="roster-number"></span>
+      <input class="roster-name" type="text" placeholder="Youth name">
+      <button class="move-up icon-button" type="button" aria-label="Move up">↑</button>
+      <button class="move-down icon-button" type="button" aria-label="Move down">↓</button>
+      <button class="remove-person icon-button danger" type="button" aria-label="Remove youth">×</button>
+    </div>
+  </template>
+
+  <script src="app.js"></script>
+</body>
+</html>
