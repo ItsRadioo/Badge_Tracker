@@ -455,10 +455,22 @@ function oasPage(stream) {
 }
 
 
+const oasAbbreviations = {
+  "Camping": "CAM",
+  "Trail": "TRL",
+  "Winter": "WIN",
+  "Paddling": "PAD",
+  "Aquatic": "AQU",
+  "Vertical": "VRT",
+  "Scoutcraft": "SCT",
+  "Emergency": "EMG",
+  "Sailing": "SAI"
+};
+
 function oasStagePage(stage) {
   const config = activeConfig();
   const data = activeData();
-  const streamHeaders = oasStreams.map(stream => `<th>${esc(stream)}</th>`).join("");
+  const streamHeaders = oasStreams.map(stream => `<th title="${esc(stream)}">${esc(oasAbbreviations[stream] || stream.slice(0,3).toUpperCase())}</th>`).join("");
   const rows = data.roster.map((person, index) => `<tr>
     <td>${index + 1}</td>
     <td class="name-col">${personNameCell(person)}</td>
@@ -473,6 +485,7 @@ function oasStagePage(stage) {
       <thead><tr><th class="num-col">#</th><th class="name-col">${esc(config.youthLabel)}</th>${streamHeaders}</tr></thead>
       <tbody>${rows}</tbody>
     </table>
+    <div class="oas-legend"><strong>Legend:</strong> ${oasStreams.map(stream => `<span><b>${esc(oasAbbreviations[stream] || stream.slice(0,3).toUpperCase())}</b> = ${esc(stream)}</span>`).join("")}</div>
     <div class="footer-note">Check each Outdoor Adventure Skill when Stage ${stage} is completed.</div>
   </section>`;
 }

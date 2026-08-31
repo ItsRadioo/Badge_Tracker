@@ -411,7 +411,7 @@ h2 {
 }
 
 @media print {
-  @page { size: letter portrait; margin: .28in; }
+  @page { size: letter; margin: .28in; }
   body { background: var(--white); }
   .no-print { display: none !important; }
   .app-shell, .container { width: auto; max-width: none; margin: 0; padding: 0; }
@@ -558,18 +558,13 @@ body[data-section="scouts"] { --section-accent: #b4232f; --section-soft: #fdecee
 }
 
 /* Dedicated print orientations */
-@page portraitSheet { size: letter portrait; margin: .32in; }
-@page landscapeBook { size: letter landscape; margin: .28in; }
-
 @media print {
   /* Full record book remains landscape because its 9-stage OAS tables are wide. */
   body:not(.printing-attendance):not(.printing-report):not(.printing-oas-stages) .print-page {
-    page: landscapeBook;
   }
 
   /* Attendance is intentionally portrait. */
   body.printing-attendance .attendance-page {
-    page: portraitSheet;
   }
 
   /* Stage sheets: one stage/page, all nine OAS skills, portrait. */
@@ -578,7 +573,6 @@ body[data-section="scouts"] { --section-accent: #b4232f; --section-soft: #fdecee
   body.printing-oas-stages .oas-stage-print-book { display:block !important; }
   body.printing-oas-stages .oas-stage-page {
     display:block !important;
-    page: portraitSheet;
     break-after:page;
     page-break-after:always;
   }
@@ -600,11 +594,22 @@ body[data-section="scouts"] { --section-accent: #b4232f; --section-soft: #fdecee
   .oas-stage-table .num-col { width:4%; }
   .oas-stage-table .name-col { width:22%; text-align:left; }
   .oas-stage-table th:not(.num-col):not(.name-col) {
-    writing-mode:vertical-rl;
-    transform:rotate(180deg);
-    height:92px;
     white-space:nowrap;
-    width:auto;
+    height:auto;
+    font-size:8px;
   }
   .oas-stage-table .track-check { width:13px; height:13px; }
+}
+
+.oas-legend {
+  margin-top:8px;
+  padding:7px 9px;
+  border:1px solid #bbb;
+  border-radius:6px;
+  font-size:8px;
+  line-height:1.45;
+}
+.oas-legend span { display:inline-block; margin-right:10px; white-space:nowrap; }
+@media print {
+  .oas-legend { break-inside:avoid; page-break-inside:avoid; }
 }
