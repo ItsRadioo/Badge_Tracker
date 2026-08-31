@@ -157,5 +157,30 @@
   </template>
 
   <script src="app.js"></script>
+
+  <div id="printOrientationModal" class="print-modal" hidden>
+    <div class="print-modal-backdrop" data-close-print-modal></div>
+    <section class="print-modal-card" role="dialog" aria-modal="true" aria-labelledby="printOrientationTitle">
+      <button id="printModalClose" class="print-modal-close" type="button" aria-label="Close">×</button>
+      <p class="eyebrow">Print setup</p>
+      <h2 id="printOrientationTitle">Choose page orientation</h2>
+      <p class="print-modal-copy">Select the layout to apply before the browser print window opens.</p>
+
+      <div class="orientation-options">
+        <button class="orientation-choice" type="button" data-orientation="portrait">
+          <span class="paper-icon portrait-paper" aria-hidden="true"></span>
+          <strong>Portrait</strong>
+          <small>8.5 × 11 vertical</small>
+        </button>
+
+        <button class="orientation-choice" type="button" data-orientation="landscape">
+          <span class="paper-icon landscape-paper" aria-hidden="true"></span>
+          <strong>Landscape</strong>
+          <small>11 × 8.5 horizontal</small>
+        </button>
+      </div>
+    </section>
+  </div>
+
 </body>
 </html>

@@ -805,6 +805,52 @@ function resetSelectedSection() {
   queueSave();
 }
 
+
+let pendingPrintAction = null;
+
+function applyPrintOrientation(orientation) {
+  let style = document.getElementById("dynamicPrintOrientation");
+  if (!style) {
+    style = document.createElement("style");
+    style.id = "dynamicPrintOrientation";
+    document.head.appendChild(style);
+  }
+  style.textContent = `@media print { @page { size: letter ${orientation}; margin: .28in; } }`;
+}
+
+function openPrintOrientationModal(printAction) {
+  pendingPrintAction = printAction;
+  const modal = document.getElementById("printOrientationModal");
+  modal.hidden = false;
+  document.body.classList.add("modal-open");
+}
+
+function closePrintOrientationModal() {
+  document.getElementById("printOrientationModal").hidden = true;
+  document.body.classList.remove("modal-open");
+  pendingPrintAction = null;
+}
+
+function choosePrintOrientation(orientation) {
+  const action = pendingPrintAction;
+  applyPrintOrientation(orientation);
+  closePrintOrientationModal();
+  if (typeof action === "function") {
+    requestAnimationFrame(() => requestAnimationFrame(action));
+  }
+}
+
+document.querySelectorAll(".orientation-choice").forEach(button => {
+  button.addEventListener("click", () => choosePrintOrientation(button.dataset.orientation));
+});
+document.getElementById("printModalClose").addEventListener("click", closePrintOrientationModal);
+document.querySelector("[data-close-print-modal]").addEventListener("click", closePrintOrientationModal);
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape" && !document.getElementById("printOrientationModal").hidden) {
+    closePrintOrientationModal();
+  }
+});
+
 bindInputs();
 renderAll();
 document.querySelectorAll(".section-tab").forEach(tab => tab.addEventListener("click", () => {
@@ -813,45 +859,51 @@ document.querySelectorAll(".section-tab").forEach(tab => tab.addEventListener("c
 }));
 els.addPersonBtn.addEventListener("click", addPerson);
 document.getElementById("printBtn").addEventListener("click", () => {
-  document.body.classList.remove("printing-report", "printing-attendance");
-  window.print();
+  openPrintOrientationModal(() => {
+    document.body.classList.remove("printing-report", "printing-attendance", "printing-oas-stages");
+    window.print();
+  });
 });
 
 
 document.getElementById("printOasStagesBtn").addEventListener("click", () => {
-  const existing = document.getElementById("oasStagePrintBook");
-  if (existing) existing.remove();
-  const book = document.createElement("div");
-  book.id = "oasStagePrintBook";
-  book.className = "oas-stage-print-book";
-  book.innerHTML = printableOasStages();
-  document.body.appendChild(book);
-  book.querySelectorAll(".track-check").forEach(box => {
-    box.addEventListener("change", event => {
-      activeData().checks[event.target.dataset.checkKey] = event.target.checked;
-      queueSave();
-    });
+  openPrintOrientationModal(() => {
+      const existing = document.getElementById("oasStagePrintBook");
+      if (existing) existing.remove();
+      const book = document.createElement("div");
+      book.id = "oasStagePrintBook";
+      book.className = "oas-stage-print-book";
+      book.innerHTML = printableOasStages();
+      document.body.appendChild(book);
+      book.querySelectorAll(".track-check").forEach(box => {
+        box.addEventListener("change", event => {
+          activeData().checks[event.target.dataset.checkKey] = event.target.checked;
+          queueSave();
+        });
+      });
+      document.body.classList.remove("printing-report", "printing-attendance");
+      document.body.classList.add("printing-oas-stages");
+      const cleanup = () => {
+        document.body.classList.remove("printing-oas-stages");
+        book.remove();
+        window.removeEventListener("afterprint", cleanup);
+      };
+      window.addEventListener("afterprint", cleanup);
+      window.print();
   });
-  document.body.classList.remove("printing-report", "printing-attendance");
-  document.body.classList.add("printing-oas-stages");
-  const cleanup = () => {
-    document.body.classList.remove("printing-oas-stages");
-    book.remove();
-    window.removeEventListener("afterprint", cleanup);
-  };
-  window.addEventListener("afterprint", cleanup);
-  window.print();
 });
 
 document.getElementById("printAttendanceBtn").addEventListener("click", () => {
-  document.body.classList.remove("printing-report");
-  document.body.classList.add("printing-attendance");
-  const cleanup = () => {
-    document.body.classList.remove("printing-attendance");
-    window.removeEventListener("afterprint", cleanup);
-  };
-  window.addEventListener("afterprint", cleanup);
-  window.print();
+  openPrintOrientationModal(() => {
+    document.body.classList.remove("printing-report", "printing-oas-stages");
+    document.body.classList.add("printing-attendance");
+    const cleanup = () => {
+      document.body.classList.remove("printing-attendance");
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+    window.print();
+  });
 });
 document.getElementById("inventoryBtn").addEventListener("click", () => {
   const inventoryOpen = !document.getElementById("inventoryView").hidden;
@@ -859,8 +911,8 @@ document.getElementById("inventoryBtn").addEventListener("click", () => {
   else showInventory();
 });
 document.getElementById("recordsBtn").addEventListener("click", showRecords);
-document.getElementById("printInventoryBtn").addEventListener("click", () => printInventoryReport(false));
-document.getElementById("printOrderBtn").addEventListener("click", () => printInventoryReport(true));
+document.getElementById("printInventoryBtn").addEventListener("click", () => openPrintOrientationModal(() => printInventoryReport(false)));
+document.getElementById("printOrderBtn").addEventListener("click", () => openPrintOrientationModal(() => printInventoryReport(true)));
 document.getElementById("exportBtn").addEventListener("click", exportBackup);
 document.getElementById("resetBtn").addEventListener("click", resetSelectedSection);
 document.getElementById("importFile").addEventListener("change", event => {

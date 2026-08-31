@@ -613,3 +613,79 @@ body[data-section="scouts"] { --section-accent: #b4232f; --section-soft: #fdecee
 @media print {
   .oas-legend { break-inside:avoid; page-break-inside:avoid; }
 }
+
+/* Print orientation modal */
+.print-modal[hidden] { display:none !important; }
+.print-modal {
+  position:fixed;
+  inset:0;
+  z-index:9999;
+  display:grid;
+  place-items:center;
+  padding:20px;
+}
+.print-modal-backdrop {
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.58);
+}
+.print-modal-card {
+  position:relative;
+  z-index:1;
+  width:min(520px, 100%);
+  background:#fff;
+  border-radius:18px;
+  box-shadow:0 24px 70px rgba(0,0,0,.28);
+  padding:26px;
+}
+.print-modal-card h2 { margin:.15rem 0 .45rem; }
+.print-modal-copy { margin:0 0 20px; color:var(--muted); }
+.print-modal-close {
+  position:absolute;
+  right:12px;
+  top:10px;
+  border:0;
+  background:transparent;
+  font-size:28px;
+  line-height:1;
+  cursor:pointer;
+}
+.orientation-options {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.orientation-choice {
+  min-height:170px;
+  border:2px solid #d7d7d7;
+  background:#fafafa;
+  border-radius:16px;
+  cursor:pointer;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:7px;
+  font:inherit;
+}
+.orientation-choice:hover,
+.orientation-choice:focus-visible {
+  border-color:var(--red-600);
+  background:var(--red-100);
+  outline:none;
+}
+.orientation-choice strong { font-size:1.05rem; }
+.orientation-choice small { color:var(--muted); }
+.paper-icon {
+  display:block;
+  border:2px solid #333;
+  background:white;
+  box-shadow:0 2px 6px rgba(0,0,0,.1);
+}
+.portrait-paper { width:48px; height:68px; }
+.landscape-paper { width:68px; height:48px; }
+
+@media (max-width:560px) {
+  .orientation-options { grid-template-columns:1fr; }
+  .orientation-choice { min-height:135px; }
+}
