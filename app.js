@@ -410,7 +410,7 @@ function attendancePage() {
   const rows = data.roster.map((person, index) => `<tr>
     <td>${index + 1}</td>
     <td class="name-col">${personNameCell(person)}</td>
-    <td class="attendance-prepaid">${Number(person.prepaidDues || 0) > 0 ? `$${Number(person.prepaidDues).toFixed(2)}` : "—"}</td>
+    <td class="attendance-prepaid">${Number(person.prepaidDues || 0) > 0 ? `$${Number(person.prepaidDues).toFixed(2)}` : ""}</td>
     ${Array.from({ length: 4 }, (_, meeting) => `
       <td class="attendance-date" aria-label="Meeting ${meeting + 1} date"></td>
       <td class="attendance-dues" aria-label="Meeting ${meeting + 1} dues"></td>`).join("")}
