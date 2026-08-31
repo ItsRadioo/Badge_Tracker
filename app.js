@@ -3,7 +3,7 @@ const LEGACY_KEY = "beaverBadgeTrackerV1";
 const MAX_ROSTER = 25;
 
 const oasStreams = [
-  "Aquatic Skills", "Camping Skills", "Emergency Aid Skills", "Hiking Skills",
+  "Aquatic Skills", "Camping Skills", "Emergency Aid Skills",
   "Paddling Skills", "Sailing Skills", "Scoutcraft Skills", "Trail Skills",
   "Vertical Skills", "Winter Skills"
 ];
