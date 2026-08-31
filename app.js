@@ -3,7 +3,7 @@ const LEGACY_KEY = "beaverBadgeTrackerV1";
 const MAX_ROSTER = 25;
 
 const oasStreams = [
-  "Aquatic Skills", "Camping Skills", "Emergency Aid Skills",
+  "Aquatic Skills", "Camping Skills", "Emergency Aid Skills", "Hiking Skills",
   "Paddling Skills", "Sailing Skills", "Scoutcraft Skills", "Trail Skills",
   "Vertical Skills", "Winter Skills"
 ];
@@ -454,6 +454,33 @@ function oasPage(stream) {
   </section>`;
 }
 
+
+function oasStagePage(stage) {
+  const config = activeConfig();
+  const data = activeData();
+  const streamHeaders = oasStreams.map(stream => `<th>${esc(stream)}</th>`).join("");
+  const rows = data.roster.map((person, index) => `<tr>
+    <td>${index + 1}</td>
+    <td class="name-col">${personNameCell(person)}</td>
+    ${oasStreams.map(stream => {
+      const slug = slugify(stream);
+      return `<td>${checkBox(`oas:${slug}:${person.id}:${stage}`, `${person.name} ${stream} Stage ${stage}`)}</td>`;
+    }).join("")}
+  </tr>`).join("");
+  return `<section class="print-page oas-stage-page" data-oas-stage="${stage}">
+    ${pageTitle(`OAS Stage ${stage}`, `All 9 Outdoor Adventure Skills — ${config.label}`)}
+    <table class="tracker-table oas-stage-table">
+      <thead><tr><th class="num-col">#</th><th class="name-col">${esc(config.youthLabel)}</th>${streamHeaders}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="footer-note">Check each Outdoor Adventure Skill when Stage ${stage} is completed.</div>
+  </section>`;
+}
+
+function printableOasStages() {
+  return Array.from({ length: 9 }, (_, i) => oasStagePage(i + 1)).join("");
+}
+
 function renderPrintBook() {
   els.printBook.innerHTML = overviewPage() + attendancePage() + pabPage() + oasStreams.map(oasPage).join("");
   els.printBook.querySelectorAll(".track-check").forEach(box => {
@@ -774,6 +801,32 @@ document.querySelectorAll(".section-tab").forEach(tab => tab.addEventListener("c
 els.addPersonBtn.addEventListener("click", addPerson);
 document.getElementById("printBtn").addEventListener("click", () => {
   document.body.classList.remove("printing-report", "printing-attendance");
+  window.print();
+});
+
+
+document.getElementById("printOasStagesBtn").addEventListener("click", () => {
+  const existing = document.getElementById("oasStagePrintBook");
+  if (existing) existing.remove();
+  const book = document.createElement("div");
+  book.id = "oasStagePrintBook";
+  book.className = "oas-stage-print-book";
+  book.innerHTML = printableOasStages();
+  document.body.appendChild(book);
+  book.querySelectorAll(".track-check").forEach(box => {
+    box.addEventListener("change", event => {
+      activeData().checks[event.target.dataset.checkKey] = event.target.checked;
+      queueSave();
+    });
+  });
+  document.body.classList.remove("printing-report", "printing-attendance");
+  document.body.classList.add("printing-oas-stages");
+  const cleanup = () => {
+    document.body.classList.remove("printing-oas-stages");
+    book.remove();
+    window.removeEventListener("afterprint", cleanup);
+  };
+  window.addEventListener("afterprint", cleanup);
   window.print();
 });
 
