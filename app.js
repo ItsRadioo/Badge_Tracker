@@ -120,7 +120,7 @@ function newRoster(count = 12) {
 
 function newSectionState(config) {
   return {
-    details: { sectionName: config.defaultUnit, scouterName: "" },
+    details: { sectionName: config.defaultUnit, scouterName: "", attendanceMonth: "" },
     roster: newRoster(),
     checks: {}
   };
@@ -140,6 +140,7 @@ const els = {
   groupName: document.getElementById("groupName"),
   scoutingYear: document.getElementById("scoutingYear"),
   sectionName: document.getElementById("sectionName"),
+  attendanceMonth: document.getElementById("attendanceMonth"),
   scouterName: document.getElementById("scouterName"),
   sectionNameLabel: document.getElementById("sectionNameLabel"),
   sectionHeading: document.getElementById("sectionHeading"),
@@ -162,7 +163,7 @@ function cloneDefaults() {
 
 function normalizeSection(raw, config) {
   return {
-    details: { sectionName: config.defaultUnit, scouterName: "", ...(raw?.details || {}) },
+    details: { sectionName: config.defaultUnit, scouterName: "", attendanceMonth: "", ...(raw?.details || {}) },
     roster: Array.isArray(raw?.roster) && raw.roster.length
       ? raw.roster.slice(0, MAX_ROSTER).map(person => ({ id: person.id || crypto.randomUUID(), name: person.name || "", prepaidDues: Math.max(0, Number(person.prepaidDues) || 0) }))
       : newRoster(),
@@ -250,6 +251,7 @@ function syncControls() {
   els.groupName.value = state.shared.groupName;
   els.scoutingYear.value = state.shared.scoutingYear;
   els.sectionName.value = data.details.sectionName;
+  if (els.attendanceMonth) els.attendanceMonth.value = data.details.attendanceMonth || "";
   els.scouterName.value = data.details.scouterName;
   els.sectionNameLabel.querySelector("span").textContent = `${config.unitLabel} name`;
   els.sectionName.placeholder = `${config.unitLabel} name`;
@@ -417,7 +419,7 @@ function attendancePage() {
   </tr>`).join("");
 
   return `<section class="print-page attendance-page">${pageTitle("Attendance & Dues", "Monthly section attendance sheet")}
-    <div class="attendance-month"><strong>Month:</strong><span></span></div>
+    <div class="attendance-month"><strong>Month:</strong><span>${esc(data.details.attendanceMonth || "")}</span></div>
     <table class="tracker-table attendance-table">
       <thead>
         <tr class="attendance-group-row">
@@ -850,6 +852,14 @@ document.addEventListener("keydown", event => {
     closePrintOrientationModal();
   }
 });
+
+if (els.attendanceMonth) {
+  els.attendanceMonth.addEventListener("input", event => {
+    activeData().details.attendanceMonth = event.target.value;
+    queueSave();
+    renderPrintBook();
+  });
+}
 
 bindInputs();
 renderAll();

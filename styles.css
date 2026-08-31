@@ -689,3 +689,11 @@ body[data-section="scouts"] { --section-accent: #b4232f; --section-soft: #fdecee
   .orientation-options { grid-template-columns:1fr; }
   .orientation-choice { min-height:135px; }
 }
+
+.attendance-month span {
+  display:inline-block;
+  min-width:180px;
+  min-height:1.2em;
+  margin-left:6px;
+  border-bottom:1px solid #333;
+}
