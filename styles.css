@@ -697,3 +697,17 @@ body[data-section="scouts"] { --section-accent: #b4232f; --section-soft: #fdecee
   margin-left:6px;
   border-bottom:1px solid #333;
 }
+
+.attendance-scope-options{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.attendance-scope-choice{min-height:115px;padding:16px;border:2px solid #d7d7d7;border-radius:14px;background:#fafafa;cursor:pointer;text-align:left;font:inherit}
+.attendance-scope-choice:hover,.attendance-scope-choice:focus-visible{border-color:var(--red-600);background:var(--red-100);outline:none}
+.attendance-scope-choice strong,.attendance-scope-choice small{display:block}.attendance-scope-choice strong{margin-bottom:6px}.attendance-scope-choice small{color:var(--muted);line-height:1.35}
+.single-day-options{margin-top:16px;padding-top:16px;border-top:1px solid #ddd}.single-day-options label{display:grid;gap:6px;margin-bottom:12px;font-weight:800}.single-day-options input{width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:9px;font:inherit}
+.single-day-print-book{display:none}
+@media(max-width:560px){.attendance-scope-options{grid-template-columns:1fr}}
+@media print{
+ body.printing-attendance-day>*:not(.single-day-print-book){display:none!important}
+ body.printing-attendance-day .single-day-print-book{display:block!important}
+ body.printing-attendance-day .single-day-attendance-page{display:block!important}
+ .single-day-table{width:100%;table-layout:fixed}.single-day-table .num-col{width:5%}.single-day-table .name-col{width:28%}.single-day-table .attendance-prepaid{width:12%}.single-day-table th:nth-child(4){width:15%}.single-day-table th:nth-child(5){width:12%}.single-day-table th:nth-child(6){width:28%}.single-day-table td{height:34px}
+}

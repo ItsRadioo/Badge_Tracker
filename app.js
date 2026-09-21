@@ -439,6 +439,29 @@ function attendancePage() {
   </section>`;
 }
 
+
+function singleDayAttendancePage(label = "") {
+  const config = activeConfig();
+  const data = activeData();
+  const rows = data.roster.map((person, index) => `<tr>
+    <td>${index + 1}</td>
+    <td class="name-col">${personNameCell(person)}</td>
+    <td class="attendance-prepaid">${Number(person.prepaidDues || 0) > 0 ? `$${Number(person.prepaidDues).toFixed(2)}` : ""}</td>
+    <td class="single-attendance-cell"></td>
+    <td class="single-dues-cell"></td>
+    <td class="single-notes-cell"></td>
+  </tr>`).join("");
+  return `<section class="print-page attendance-page single-day-attendance-page">
+    ${pageTitle("Attendance & Dues", label ? `Single meeting — ${esc(label)}` : "Single meeting")}
+    <div class="attendance-month"><strong>Month:</strong><span>${esc(data.details.attendanceMonth || "")}</span></div>
+    <table class="tracker-table attendance-table single-day-table">
+      <thead><tr><th class="num-col">#</th><th class="name-col">${esc(config.youthLabel)}</th><th class="attendance-prepaid">Prepaid</th><th>Attendance</th><th>Dues</th><th>Notes</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="footer-note">Blank prepaid cells may be completed by hand.</div>
+  </section>`;
+}
+
 function oasPage(stream) {
   const config = activeConfig();
   const data = activeData();
@@ -861,6 +884,50 @@ if (els.attendanceMonth) {
   });
 }
 
+
+function openAttendancePrintModal() {
+  document.getElementById("singleDayOptions").hidden = true;
+  document.getElementById("singleDayLabel").value = "";
+  document.getElementById("attendancePrintModal").hidden = false;
+  document.body.classList.add("modal-open");
+}
+function closeAttendancePrintModal() {
+  document.getElementById("attendancePrintModal").hidden = true;
+  document.body.classList.remove("modal-open");
+}
+function printAttendanceWithScope(scope, label = "") {
+  closeAttendancePrintModal();
+  openPrintOrientationModal(() => {
+    document.body.classList.remove("printing-report", "printing-oas-stages", "printing-attendance-day");
+    document.body.classList.add("printing-attendance");
+    let temporaryPage = null;
+    if (scope === "day") {
+      temporaryPage = document.createElement("div");
+      temporaryPage.className = "single-day-print-book";
+      temporaryPage.innerHTML = singleDayAttendancePage(label);
+      document.body.appendChild(temporaryPage);
+      document.body.classList.add("printing-attendance-day");
+    }
+    const cleanup = () => {
+      document.body.classList.remove("printing-attendance", "printing-attendance-day");
+      if (temporaryPage) temporaryPage.remove();
+      window.removeEventListener("afterprint", cleanup);
+    };
+    window.addEventListener("afterprint", cleanup);
+    window.print();
+  });
+}
+document.querySelectorAll(".attendance-scope-choice").forEach(button => button.addEventListener("click", () => {
+  if (button.dataset.attendanceScope === "week") printAttendanceWithScope("week");
+  else {
+    document.getElementById("singleDayOptions").hidden = false;
+    document.getElementById("singleDayLabel").focus();
+  }
+}));
+document.getElementById("singleDayContinue").addEventListener("click", () => printAttendanceWithScope("day", document.getElementById("singleDayLabel").value.trim()));
+document.getElementById("attendancePrintClose").addEventListener("click", closeAttendancePrintModal);
+document.querySelector("[data-close-attendance-modal]").addEventListener("click", closeAttendancePrintModal);
+
 bindInputs();
 renderAll();
 document.querySelectorAll(".section-tab").forEach(tab => tab.addEventListener("click", () => {
@@ -903,18 +970,7 @@ document.getElementById("printOasStagesBtn").addEventListener("click", () => {
   });
 });
 
-document.getElementById("printAttendanceBtn").addEventListener("click", () => {
-  openPrintOrientationModal(() => {
-    document.body.classList.remove("printing-report", "printing-oas-stages");
-    document.body.classList.add("printing-attendance");
-    const cleanup = () => {
-      document.body.classList.remove("printing-attendance");
-      window.removeEventListener("afterprint", cleanup);
-    };
-    window.addEventListener("afterprint", cleanup);
-    window.print();
-  });
-});
+document.getElementById("printAttendanceBtn").addEventListener("click", openAttendancePrintModal);
 document.getElementById("inventoryBtn").addEventListener("click", () => {
   const inventoryOpen = !document.getElementById("inventoryView").hidden;
   if (inventoryOpen) showRecords();
