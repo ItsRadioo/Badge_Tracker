@@ -839,3 +839,214 @@ body[data-section="scouts"] { --section-accent: #b4232f; --section-soft: #fdecee
     font-size:7pt;
   }
 }
+
+
+/* =========================================================
+   CLEAN SINGLE-DAY ATTENDANCE SHEET
+   Purpose-built A4 portrait and landscape layouts.
+   ========================================================= */
+@media print {
+  body.printing-attendance-day .single-day-print-book {
+    display:block !important;
+    margin:0 !important;
+    padding:0 !important;
+  }
+
+  body.printing-attendance-day .single-day-sheet {
+    display:block !important;
+    margin:0 !important;
+    padding:0 !important;
+    max-width:none !important;
+    min-height:0 !important;
+    border:0 !important;
+    box-shadow:none !important;
+    background:#fff !important;
+    color:#111 !important;
+    font-family:Arial, Helvetica, sans-serif !important;
+    box-sizing:border-box !important;
+    overflow:hidden !important;
+  }
+
+  body.print-portrait.printing-attendance-day .single-day-sheet {
+    width:194mm !important;
+    height:281mm !important;
+  }
+
+  body.print-landscape.printing-attendance-day .single-day-sheet {
+    width:281mm !important;
+    height:194mm !important;
+  }
+
+  .single-day-header {
+    border-bottom:0.5mm solid #222 !important;
+    padding:0 0 3mm !important;
+    margin:0 0 3mm !important;
+  }
+
+  .single-day-group {
+    margin:0 !important;
+    font-size:7pt !important;
+    line-height:1.1 !important;
+    font-weight:700 !important;
+    letter-spacing:1px !important;
+    text-transform:uppercase !important;
+  }
+
+  .single-day-header h1 {
+    margin:1.2mm 0 0 !important;
+    padding:0 !important;
+    font-size:20pt !important;
+    line-height:1 !important;
+    font-weight:800 !important;
+  }
+
+  .single-day-meeting {
+    margin-top:1.5mm !important;
+    font-size:8pt !important;
+    line-height:1.2 !important;
+  }
+
+  .single-day-details {
+    display:grid !important;
+    grid-template-columns:1fr 1fr 1fr !important;
+    gap:2mm !important;
+    margin:0 0 3mm !important;
+  }
+
+  .single-day-details > div {
+    height:12mm !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:2mm !important;
+    padding:0 3mm !important;
+    border:0.3mm solid #bbb !important;
+    background:#f7f7f7 !important;
+    font-size:8pt !important;
+    line-height:1 !important;
+    box-sizing:border-box !important;
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+
+  .single-day-details strong,
+  .single-day-month strong {
+    white-space:nowrap !important;
+  }
+
+  .single-day-write-line {
+    display:inline-block !important;
+    flex:1 !important;
+    min-width:15mm !important;
+    min-height:4mm !important;
+    border-bottom:0.3mm solid #444 !important;
+    line-height:4mm !important;
+  }
+
+  .single-day-month {
+    height:9mm !important;
+    display:flex !important;
+    align-items:center !important;
+    gap:3mm !important;
+    margin:0 0 2mm !important;
+    font-size:8pt !important;
+  }
+
+  .single-day-month .single-day-write-line {
+    flex:none !important;
+    width:55mm !important;
+  }
+
+  .single-day-attendance-table {
+    width:100% !important;
+    border-collapse:collapse !important;
+    border-spacing:0 !important;
+    table-layout:fixed !important;
+    margin:0 !important;
+    font-size:8pt !important;
+  }
+
+  .single-day-attendance-table th,
+  .single-day-attendance-table td {
+    border:0.3mm solid #555 !important;
+    box-sizing:border-box !important;
+    overflow:hidden !important;
+    vertical-align:middle !important;
+  }
+
+  .single-day-attendance-table th {
+    height:8mm !important;
+    padding:1mm !important;
+    background:#f1f1f1 !important;
+    color:#111 !important;
+    text-align:center !important;
+    font-weight:700 !important;
+    -webkit-print-color-adjust:exact !important;
+    print-color-adjust:exact !important;
+  }
+
+  .single-day-attendance-table td {
+    padding:1.5mm 2mm !important;
+  }
+
+  .single-day-attendance-table .sd-number {
+    width:9mm !important;
+    text-align:center !important;
+  }
+
+  .single-day-attendance-table .sd-name {
+    width:auto !important;
+  }
+
+  .single-day-attendance-table .sd-prepaid {
+    width:23mm !important;
+    text-align:center !important;
+  }
+
+  .single-day-attendance-table .sd-attendance {
+    width:18mm !important;
+    text-align:center !important;
+  }
+
+  .single-day-attendance-table .sd-dues {
+    width:16mm !important;
+    text-align:center !important;
+  }
+
+  .single-day-attendance-table tbody .sd-name {
+    font-weight:600 !important;
+  }
+
+  /* Portrait deliberately uses most of A4's vertical space. */
+  body.print-portrait.printing-attendance-day .single-day-attendance-table tbody td {
+    height:14mm !important;
+  }
+
+  /* Landscape has less page height, so rows are compact but still writable. */
+  body.print-landscape.printing-attendance-day .single-day-attendance-table tbody td {
+    height:8.4mm !important;
+  }
+
+  body.print-landscape.printing-attendance-day .single-day-details {
+    grid-template-columns:1fr 1.25fr 1fr !important;
+  }
+
+  body.print-landscape.printing-attendance-day .single-day-attendance-table .sd-prepaid {
+    width:25mm !important;
+  }
+
+  body.print-landscape.printing-attendance-day .single-day-attendance-table .sd-attendance {
+    width:20mm !important;
+  }
+
+  body.print-landscape.printing-attendance-day .single-day-attendance-table .sd-dues {
+    width:18mm !important;
+  }
+
+  .single-day-footer {
+    margin-top:2mm !important;
+    text-align:center !important;
+    font-size:6.5pt !important;
+    line-height:1.2 !important;
+    color:#666 !important;
+  }
+}

@@ -443,22 +443,55 @@ function attendancePage() {
 function singleDayAttendancePage(label = "") {
   const config = activeConfig();
   const data = activeData();
-  const rows = data.roster.map((person, index) => `<tr>
-    <td>${index + 1}</td>
-    <td class="name-col">${personNameCell(person)}</td>
-    <td class="attendance-prepaid">${Number(person.prepaidDues || 0) > 0 ? `$${Number(person.prepaidDues).toFixed(2)}` : ""}</td>
-    <td class="single-attendance-cell"></td>
-    <td class="single-dues-cell"></td>
-    <td class="single-notes-cell"></td>
-  </tr>`).join("");
-  return `<section class="print-page attendance-page single-day-attendance-page">
-    ${pageTitle("Attendance & Dues", label ? `Single meeting — ${esc(label)}` : "Single meeting")}
-    <div class="attendance-month"><strong>Month:</strong><span>${esc(data.details.attendanceMonth || "")}</span></div>
-    <table class="tracker-table attendance-table single-day-table">
-      <thead><tr><th class="num-col">#</th><th class="name-col">${esc(config.youthLabel)}</th><th class="attendance-prepaid">Prepaid</th><th>Attendance</th><th>Dues</th><th>Notes</th></tr></thead>
+
+  const rows = data.roster.map((person, index) => {
+    const prepaid = Number(person.prepaidDues || 0);
+    return `<tr>
+      <td class="sd-number">${index + 1}</td>
+      <td class="sd-name">${personNameCell(person)}</td>
+      <td class="sd-prepaid">${prepaid > 0 ? prepaid.toFixed(0) : ""}</td>
+      <td class="sd-attendance"></td>
+      <td class="sd-dues"></td>
+    </tr>`;
+  }).join("");
+
+  const sectionLabel = esc((data.details.sectionName || config.defaultUnit || "").toUpperCase());
+  const youthLabel = esc(config.youthLabel || "Youth");
+  const month = esc(data.details.attendanceMonth || "");
+  const meeting = esc(label || "");
+
+  return `<section class="print-page single-day-sheet">
+    <header class="single-day-header">
+      <div class="single-day-group">1ST SAULT STE. MARIE · ${sectionLabel}</div>
+      <h1>Attendance &amp; Dues</h1>
+      <div class="single-day-meeting">Single meeting${meeting ? ` — ${meeting}` : ""}</div>
+    </header>
+
+    <div class="single-day-details">
+      <div><strong>Scouting Year:</strong><span class="single-day-write-line"></span></div>
+      <div><strong>${esc(config.unitLabel || "Section")}:</strong><span>${esc(data.details.sectionName || config.defaultUnit || "")}</span></div>
+      <div><strong>Scouter:</strong><span class="single-day-write-line">${esc(data.details.scouterName || "")}</span></div>
+    </div>
+
+    <div class="single-day-month">
+      <strong>Month:</strong>
+      <span class="single-day-write-line">${month}</span>
+    </div>
+
+    <table class="single-day-attendance-table">
+      <thead>
+        <tr>
+          <th class="sd-number">#</th>
+          <th class="sd-name">${youthLabel}</th>
+          <th class="sd-prepaid">Prepaid</th>
+          <th class="sd-attendance">Att.</th>
+          <th class="sd-dues">Dues</th>
+        </tr>
+      </thead>
       <tbody>${rows}</tbody>
     </table>
-    <div class="footer-note">Blank prepaid cells may be completed by hand.</div>
+
+    <div class="single-day-footer">Blank prepaid cells may be completed by hand.</div>
   </section>`;
 }
 
