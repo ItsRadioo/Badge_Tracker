@@ -711,3 +711,131 @@ body[data-section="scouts"] { --section-accent: #b4232f; --section-soft: #fdecee
  body.printing-attendance-day .single-day-attendance-page{display:block!important}
  .single-day-table{width:100%;table-layout:fixed}.single-day-table .num-col{width:5%}.single-day-table .name-col{width:28%}.single-day-table .attendance-prepaid{width:12%}.single-day-table th:nth-child(4){width:15%}.single-day-table th:nth-child(5){width:12%}.single-day-table th:nth-child(6){width:28%}.single-day-table td{height:34px}
 }
+
+/* A4 attendance print system: separate portrait and landscape layouts */
+@media print {
+  @page { margin: 8mm; }
+
+  body.printing-attendance .attendance-page {
+    box-sizing:border-box;
+    width:100%;
+    max-width:none;
+    margin:0;
+    padding:0;
+    box-shadow:none;
+    border:0;
+    overflow:hidden;
+  }
+
+  body.printing-attendance .attendance-page .page-header,
+  body.printing-attendance .single-day-attendance-page .page-header {
+    margin-bottom:3mm;
+    padding-bottom:2mm;
+    border-bottom:1.5px solid #111;
+  }
+
+  body.printing-attendance .attendance-month {
+    margin:0 0 3mm;
+    font-size:9pt;
+  }
+
+  body.printing-attendance .tracker-table {
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+    font-size:8pt;
+  }
+
+  body.printing-attendance .tracker-table th,
+  body.printing-attendance .tracker-table td {
+    border:0.35mm solid #555;
+    padding:1.3mm 1mm;
+    vertical-align:middle;
+    overflow:hidden;
+  }
+
+  body.printing-attendance .tracker-table th {
+    background:#f1f1f1 !important;
+    color:#111 !important;
+    font-weight:700;
+    text-align:center;
+    -webkit-print-color-adjust:exact;
+    print-color-adjust:exact;
+  }
+
+  body.printing-attendance .tracker-table tbody tr {
+    break-inside:avoid;
+    page-break-inside:avoid;
+  }
+
+  /* PORTRAIT A4: tighter, taller rows, narrow utility columns. */
+  body.print-portrait.printing-attendance .attendance-page {
+    min-height:275mm;
+  }
+  body.print-portrait.printing-attendance .tracker-table {
+    font-size:7.6pt;
+  }
+  body.print-portrait.printing-attendance .tracker-table th,
+  body.print-portrait.printing-attendance .tracker-table td {
+    padding:1.15mm .75mm;
+  }
+  body.print-portrait.printing-attendance .attendance-table .num-col {
+    width:5%;
+  }
+  body.print-portrait.printing-attendance .attendance-table .name-col {
+    width:27%;
+  }
+  body.print-portrait.printing-attendance .attendance-table .attendance-prepaid {
+    width:12%;
+  }
+  body.print-portrait.printing-attendance .attendance-table tbody td {
+    height:8mm;
+  }
+
+  /* LANDSCAPE A4: wider names and meeting fields, slightly shorter rows. */
+  body.print-landscape.printing-attendance .attendance-page {
+    min-height:188mm;
+  }
+  body.print-landscape.printing-attendance .tracker-table {
+    font-size:8.3pt;
+  }
+  body.print-landscape.printing-attendance .tracker-table th,
+  body.print-landscape.printing-attendance .tracker-table td {
+    padding:1.25mm 1.1mm;
+  }
+  body.print-landscape.printing-attendance .attendance-table .num-col {
+    width:4%;
+  }
+  body.print-landscape.printing-attendance .attendance-table .name-col {
+    width:24%;
+  }
+  body.print-landscape.printing-attendance .attendance-table .attendance-prepaid {
+    width:10%;
+  }
+  body.print-landscape.printing-attendance .attendance-table tbody td {
+    height:7mm;
+  }
+
+  /* Single-day portrait: large writing areas without wasting horizontal space. */
+  body.print-portrait.printing-attendance-day .single-day-table .num-col { width:5%; }
+  body.print-portrait.printing-attendance-day .single-day-table .name-col { width:30%; }
+  body.print-portrait.printing-attendance-day .single-day-table .attendance-prepaid { width:13%; }
+  body.print-portrait.printing-attendance-day .single-day-table th:nth-child(4) { width:15%; }
+  body.print-portrait.printing-attendance-day .single-day-table th:nth-child(5) { width:13%; }
+  body.print-portrait.printing-attendance-day .single-day-table th:nth-child(6) { width:24%; }
+  body.print-portrait.printing-attendance-day .single-day-table td { height:10mm; }
+
+  /* Single-day landscape: extra room for notes and handwriting. */
+  body.print-landscape.printing-attendance-day .single-day-table .num-col { width:4%; }
+  body.print-landscape.printing-attendance-day .single-day-table .name-col { width:25%; }
+  body.print-landscape.printing-attendance-day .single-day-table .attendance-prepaid { width:10%; }
+  body.print-landscape.printing-attendance-day .single-day-table th:nth-child(4) { width:14%; }
+  body.print-landscape.printing-attendance-day .single-day-table th:nth-child(5) { width:11%; }
+  body.print-landscape.printing-attendance-day .single-day-table th:nth-child(6) { width:36%; }
+  body.print-landscape.printing-attendance-day .single-day-table td { height:8mm; }
+
+  body.printing-attendance .footer-note {
+    margin-top:2mm;
+    font-size:7pt;
+  }
+}

@@ -834,13 +834,15 @@ function resetSelectedSection() {
 let pendingPrintAction = null;
 
 function applyPrintOrientation(orientation) {
+  document.body.classList.remove("print-portrait", "print-landscape");
+  document.body.classList.add(`print-${orientation}`);
   let style = document.getElementById("dynamicPrintOrientation");
   if (!style) {
     style = document.createElement("style");
     style.id = "dynamicPrintOrientation";
     document.head.appendChild(style);
   }
-  style.textContent = `@media print { @page { size: letter ${orientation}; margin: .28in; } }`;
+  style.textContent = `@media print { @page { size: A4 ${orientation}; margin: 8mm; } }`;
 }
 
 function openPrintOrientationModal(printAction) {
